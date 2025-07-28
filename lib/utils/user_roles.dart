@@ -1,4 +1,4 @@
 enum UserRole {
-  Admin,
-  Customer,
+  admin, // Corrected to lowerCamelCase
+  customer, // Corrected to lowerCamelCase
 }

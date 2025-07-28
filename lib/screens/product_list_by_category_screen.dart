@@ -6,19 +6,19 @@
       // Removed import 'package:myapp/widgets/custom_app_bar.dart';
       import 'package:myapp/screens/product_detail_screen.dart';
       import 'package:myapp/screens/home_screen.dart'; // Import HomeScreen for the stub
-      
+
       class ProductListByCategoryScreen extends StatelessWidget {
         final String categoryName;
-      
+
         const ProductListByCategoryScreen({
           super.key,
           required this.categoryName,
         });
-      
+
         @override
         Widget build(BuildContext context) {
           final productService = Provider.of<ProductService>(context);
-      
+
           return Scaffold(
             appBar: CustomAppBarStub(title: categoryName), // Using stub
             body: FutureBuilder<List<Product>>(
@@ -36,11 +36,13 @@
                     itemCount: products.length,
                     itemBuilder: (context, index) {
                       final product = products[index];
+                      // Handle nullable imageUrl
+                      final imageUrl = product.imageUrl ?? 'https://via.placeholder.com/50';
                       return Card(
                         margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
                         child: ListTile(
                           leading: CachedNetworkImage(
-                            imageUrl: product.imageUrl,
+                            imageUrl: imageUrl, // Use the potentially placeholder imageUrl
                             width: 50,
                             height: 50,
                             fit: BoxFit.cover,
@@ -53,7 +55,8 @@
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => ProductDetailScreen(productId: product.id),
+                                // Pass the product object to ProductDetailScreen
+                                builder: (context) => ProductDetailScreen(product: product), // Corrected to pass product object
                               ),
                             );
                           },

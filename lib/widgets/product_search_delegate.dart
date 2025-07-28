@@ -41,9 +41,11 @@
             itemCount: results.length,
             itemBuilder: (context, index) {
               final product = results.elementAt(index);
+              // Handle nullable imageUrl
+              final imageUrl = product.imageUrl ?? 'https://via.placeholder.com/50';
               return ListTile(
                 leading: CachedNetworkImage(
-                  imageUrl: product.imageUrl,
+                  imageUrl: imageUrl,
                   width: 50,
                   height: 50,
                   fit: BoxFit.cover,
@@ -51,9 +53,10 @@
                   errorWidget: (context, url, error) => const Icon(Icons.error),
                 ),
                 title: Text(product.name),
-                subtitle: Text('$${product.price.toStringAsFixed(2)}'), // Interpolation fixed
+                subtitle: Text('$${product.price.toStringAsFixed(2)}'),
                 onTap: () {
-                   Navigator.push(context, MaterialPageRoute(builder: (context) => ProductDetailScreen(product: product)));
+                   // Pass the product object to ProductDetailScreen
+                   Navigator.push(context, MaterialPageRoute(builder: (context) => ProductDetailScreen(product: product))); // Corrected to pass product object
                 },
               );
             },

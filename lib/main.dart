@@ -26,14 +26,16 @@ class AdminScreenPlaceholder extends StatelessWidget {
   Widget build(BuildContext context) {
     log('Building AdminScreenPlaceholder...'); // Added logging
     return Scaffold(
-      appBar: AppBar(title: const Text('Admin Dashboard')),
+      appBar: AppBar(
+        title: const Text('Admin Dashboard'),
+      ),
       body: const Center(child: Text('Admin Content Here')),
     );
   }
 }
 
 void main() async {
-  print('TEST: Logging is working!'); // Added test print statement
+  debugPrint('TEST: Logging is working!'); // Added test print statement
   WidgetsFlutterBinding.ensureInitialized();
   log('Firebase initializing...'); // Added logging
   await Firebase.initializeApp(
@@ -47,6 +49,7 @@ void main() async {
   };
 
   runApp(const MyApp()); // Running the MyApp widget
+  debugPrint('TEST: runApp finished.'); // Added debugPrint after runApp
 }
 
 class MyApp extends StatelessWidget {
@@ -76,6 +79,7 @@ class MyApp extends StatelessWidget {
               GoRoute(
                 path: '/',
                 builder: (BuildContext context, GoRouterState state) {
+                  // This route now shows the HomeScreen for authenticated users
                   return const HomeScreen();
                 },
               ),
@@ -102,24 +106,29 @@ class MyApp extends StatelessWidget {
               final isAuthenticated = user != null;
               final isGoingToAuth = state.uri.toString() == '/auth';
               
-              log('GoRouter Redirect: path = ${state.uri}, isAuthenticated = $isAuthenticated'); // Added logging
+              log('GoRouter Redirect: Evaluating path ${state.uri}'); // Added detailed log
+              log('GoRouter Redirect: isAuthenticated = $isAuthenticated'); // Added detailed log
 
               // If not authenticated, redirect to auth screen.
               if (!isAuthenticated) {
+                 log('GoRouter Redirect: User not authenticated. Redirecting to /auth'); // Added detailed log
                 return isGoingToAuth ? null : '/auth';
               }
 
               // If authenticated and trying to go to auth, redirect to home.
               if (isGoingToAuth) {
+                 log('GoRouter Redirect: User authenticated and going to /auth. Redirecting to /'); // Added detailed log
                 return '/'; // Redirect to home screen
               }
 
               // Allow navigation to the loading screen if authenticated.
               if (state.uri.toString() == '/loading') {
+                  log('GoRouter Redirect: User authenticated and going to /loading. Allowing navigation.'); // Added detailed log
                  return null;
               }
 
               // For all other authenticated routes, allow navigation.
+               log('GoRouter Redirect: User authenticated and going to ${state.uri}. Allowing navigation.'); // Added detailed log
               return null; // Allow navigation to the requested path
             },
           );

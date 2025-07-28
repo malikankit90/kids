@@ -3,28 +3,26 @@
       import 'package:cached_network_image/cached_network_image.dart';
       import 'package:myapp/models/product.dart';
       import 'package:myapp/services/product_service.dart';
-      // Removed import 'package:myapp/widgets/custom_app_bar.dart'; // Removed import path
+      // Removed import 'package:myapp/widgets/custom_app_bar.dart';
       import 'package:myapp/screens/product_detail_screen.dart';
       import 'package:myapp/screens/home_screen.dart'; // Import HomeScreen for the stub
-      
-      class ProductListBySubCategoryScreen extends StatelessWidget {
-        final String category;
-        final String subcategory;
-      
-        const ProductListBySubCategoryScreen({
+
+      class ProductListBySubcategoryScreen extends StatelessWidget {
+        final String subcategoryName;
+
+        const ProductListBySubcategoryScreen({
           super.key,
-          required this.category,
-          required this.subcategory,
+          required this.subcategoryName,
         });
-      
+
         @override
         Widget build(BuildContext context) {
           final productService = Provider.of<ProductService>(context);
-      
+
           return Scaffold(
-            appBar: CustomAppBarStub(title: '$category - $subcategory'), // Using stub
+            appBar: CustomAppBarStub(title: subcategoryName), // Using stub
             body: FutureBuilder<List<Product>>(
-              future: productService.getProductsBySubCategory(category, subcategory),
+              future: productService.getProductsBySubcategory(subcategoryName), // Corrected method call
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
@@ -38,11 +36,13 @@
                     itemCount: products.length,
                     itemBuilder: (context, index) {
                       final product = products[index];
+                       // Handle nullable imageUrl
+                      final imageUrl = product.imageUrl ?? 'https://via.placeholder.com/50';
                       return Card(
                         margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
                         child: ListTile(
                           leading: CachedNetworkImage(
-                            imageUrl: product.imageUrl,
+                            imageUrl: imageUrl, // Use the potentially placeholder imageUrl
                             width: 50,
                             height: 50,
                             fit: BoxFit.cover,
@@ -55,7 +55,8 @@
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => ProductDetailScreen(productId: product.id),
+                                // Pass the product object to ProductDetailScreen
+                                builder: (context) => ProductDetailScreen(product: product), // Corrected to pass product object
                               ),
                             );
                           },

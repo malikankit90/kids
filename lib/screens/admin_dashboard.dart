@@ -16,7 +16,8 @@ class AdminDashboard extends StatelessWidget {
           children: [
             ElevatedButton(
               onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => const ProductListScreen()));
+                // Corrected class name to match the import
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const AdminProductListScreen()));
               },
               child: const Text('Manage Products'),
             ),

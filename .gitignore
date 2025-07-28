@@ -11,6 +11,9 @@
 .svn/
 .swiftpm/
 migrate_working_dir/
+.packages
+firebase-debug
+
 
 # IntelliJ related
 *.iml

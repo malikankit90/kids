@@ -4,6 +4,7 @@
       import 'package:myapp/models/product.dart';
       import '../screens/product_list_screen.dart';
       import 'package:path/path.dart' as path; // Import path package
+       // Removed import for dart:developer
       
       class ProductService {
         final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -70,7 +71,7 @@
             return querySnapshot.docs.map((doc) => Product.fromFirestore(doc)).toList();
 
           } catch (e) {
-            print('Error getting products with filters/sorting/pagination: $e');
+            print('Error getting products with filters/sorting/pagination: $e'); // Reverted to print
             rethrow;
           }
         }
@@ -140,7 +141,7 @@
             }
 
            } catch (e) {
-            print('Error getting last document: $e');
+            print('Error getting last document: $e'); // Reverted to print
             return null;
            }
         }
@@ -172,7 +173,7 @@
             );
             await _firestore.collection('products').add(newProduct.toMap());
           } catch (e) {
-            print('Error adding product: $e');
+            print('Error adding product: $e'); // Reverted to print
             rethrow;
           }
         }
@@ -209,7 +210,7 @@
 
             await _firestore.collection('products').doc(product.id).update(updatedProduct.toMap());
           } catch (e) {
-            print('Error updating product: $e');
+            print('Error updating product: $e'); // Reverted to print
             rethrow;
           }
         }
@@ -228,7 +229,7 @@
               await _firestore.collection('products').doc(id).delete();
             }
           } catch (e) {
-            print('Error deleting product: $e');
+            print('Error deleting product: $e'); // Reverted to print
             rethrow;
           }
         }
@@ -242,7 +243,7 @@
             final downloadUrl = await snapshot.ref.getDownloadURL();
             return downloadUrl;
           } catch (e) {
-            print('Error uploading image: $e');
+            print('Error uploading image: $e'); // Reverted to print
             rethrow;
           }
         }
@@ -253,7 +254,7 @@
              await ref.delete();
            } catch (e) {
               // Handle the case where the file doesn't exist or other errors
-             print('Error deleting image: $e');
+             print('Error deleting image: $e'); // Reverted to print
              // Continue with the rest of the process even if image deletion fails
            }
          }
@@ -267,7 +268,7 @@
                 .get();
             return querySnapshot.docs.map((doc) => Product.fromFirestore(doc)).toList();
           } catch (e) {
-            print('Error getting featured products: $e');
+            print('Error getting featured products: $e'); // Reverted to print
             return [];
           }
         }
@@ -281,7 +282,7 @@
                 .get();
             return querySnapshot.docs.map((doc) => Product.fromFirestore(doc)).toList();
           } catch (e) {
-            print('Error getting recent products: $e');
+            print('Error getting recent products: $e'); // Reverted to print
             return [];
           }
         }
@@ -294,21 +295,20 @@
                 .get();
             return querySnapshot.docs.map((doc) => Product.fromFirestore(doc)).toList();
           } catch (e) {
-            print('Error getting products by category: $e');
+            print('Error getting products by category: $e'); // Reverted to print
             return [];
           }
         }
       
-         Future<List<Product>> getProductsBySubCategory(String category, String subcategory) async {
+         Future<List<Product>> getProductsBySubcategory(String subcategory) async { // Corrected method signature
           try {
             final querySnapshot = await _firestore
                 .collection('products')
-                .where('category', isEqualTo: category)
-                .where('subcategory', isEqualTo: subcategory)
+                .where('subcategory', isEqualTo: subcategory) // Filter by subcategory
                 .get();
             return querySnapshot.docs.map((doc) => Product.fromFirestore(doc)).toList();
           } catch (e) {
-            print('Error getting products by subcategory: $e');
+            print('Error getting products by subcategory: $e'); // Reverted to print
             return [];
           }
         }
@@ -328,7 +328,7 @@
                 .where((product) => product.id != currentProductId)
                 .toList();
           } catch (e) {
-            print('Error getting related products: $e');
+            print('Error getting related products: $e'); // Reverted to print
             return [];
           }
         }
@@ -342,7 +342,7 @@
                return null;
              }
            } catch (e) {
-             print('Error getting product by ID: $e');
+             print('Error getting product by ID: $e'); // Reverted to print
              return null;
            }
          }
@@ -363,7 +363,7 @@
 
              return products;
            } catch (e) {
-             print('Error searching products: $e');
+             print('Error searching products: $e'); // Reverted to print
              return [];
            }
          }
