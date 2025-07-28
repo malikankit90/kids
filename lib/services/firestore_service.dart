@@ -1,38 +1,39 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class FirestoreService {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Get a document by path
-  Future<DocumentSnapshot> getDocument(String path) async {
-    return await _db.doc(path).get();
+  // Create a new user document in Firestore with additional details
+  Future<void> createUser(String uid, String role, {String? email, String? name}) async {
+    try {
+      await _firestore.collection('users').doc(uid).set({
+        'role': role,
+        'createdAt': Timestamp.now(), // Optional: add a timestamp
+        if (email != null) 'email': email, // Add email if provided
+        if (name != null) 'name': name,   // Add name if provided
+      });
+    } catch (e) {
+      print('Error creating user document: $e');
+      // Handle the error appropriately (e.g., throw an exception)
+      rethrow; // Re-throw the error to be caught in the calling function
+    }
   }
 
-  // Get a collection by path
-  Stream<QuerySnapshot> getCollection(String path) {
-    return _db.collection(path).snapshots();
+  // Get a user document from Firestore
+  Future<Map<String, dynamic>?> getUser(String uid) async {
+    try {
+      final docSnapshot = await _firestore.collection('users').doc(uid).get();
+      if (docSnapshot.exists) {
+        return docSnapshot.data();
+      } else {
+        return null; // User document not found
+      }
+    } catch (e) {
+      print('Error getting user document: $e');
+      // Handle the error appropriately
+      return null;
+    }
   }
 
-  // Add a document to a collection
-  Future<DocumentReference> addDocument(
-      String collectionPath, Map<String, dynamic> data) async {
-    return await _db.collection(collectionPath).add(data);
-  }
-
-  // Set a document with a specific ID
-  Future<void> setDocument(
-      String docPath, Map<String, dynamic> data) async {
-    return await _db.doc(docPath).set(data);
-  }
-
-  // Update a document
-  Future<void> updateDocument(
-      String docPath, Map<String, dynamic> data) async {
-    return await _db.doc(docPath).update(data);
-  }
-
-  // Delete a document
-  Future<void> deleteDocument(String docPath) async {
-    return await _db.doc(docPath).delete();
-  }
+  // You can add more methods here for other Firestore operations
 }

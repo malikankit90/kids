@@ -40,7 +40,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               TextFormField(
                 decoration: const InputDecoration(hintText: 'Password'),
                 validator: (val) =>
-                    val!.length < 6 ? 'Enter a password 6+ chars long' : null,
+                    val!.length < 6 ? 'Enter a password 6+ chars long' : null, // Changed minimum length to 6
                 obscureText: true,
                 onChanged: (val) {
                   setState(() => password = val);

@@ -1,31 +1,33 @@
-import 'cloud_firestore/cloud_firestore.dart';
-
-class Category {
-  final String id;
-  final String name;
-  final List<String> subcategories; // Add subcategories field
-
-  Category({
-    required this.id,
-    required this.name,
-    this.subcategories = const [], // Initialize as empty list
-  });
-
-  // Factory method to create a Category from a Firestore DocumentSnapshot
-  factory Category.fromFirestore(DocumentSnapshot doc) {
-    Map data = doc.data() as Map;
-    return Category(
-      id: doc.id,
-      name: data['name'] ?? '',
-      subcategories: List<String>.from(data['subcategories'] ?? []), // Read subcategories
-    );
-  }
-
-  // Method to convert a Category to a Firestore Document
-  Map<String, dynamic> toFirestore() {
-    return {
-      'name': name,
-      'subcategories': subcategories, // Write subcategories
-    };
-  }
-}
+      import 'package:cloud_firestore/cloud_firestore.dart';
+      
+      class Category {
+        final String id;
+        final String name;
+        final String imageUrl;
+        final List<String> subcategories;
+      
+        Category({
+          required this.id,
+          required this.name,
+          required this.imageUrl,
+          this.subcategories = const [],
+        });
+      
+        factory Category.fromFirestore(DocumentSnapshot doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          return Category(
+            id: doc.id,
+            name: data['name'] ?? '',
+            imageUrl: data['imageUrl'] ?? '',
+            subcategories: List<String>.from(data['subcategories'] ?? []),
+          );
+        }
+      
+        Map<String, dynamic> toMap() {
+          return {
+            'name': name,
+            'imageUrl': imageUrl,
+            'subcategories': subcategories,
+          };
+        }
+      }

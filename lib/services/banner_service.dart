@@ -1,32 +1,39 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:myapp/models/banner.dart';
-import 'package:myapp/services/firestore_service.dart';
-
-class BannerService {
-  final FirestoreService _firestoreService = FirestoreService();
-  final String _collectionPath = 'banners';
-
-  // Fetch all banners, ordered by the 'order' field
-  Stream<List<Banner>> getBanners() {
-    return _firestoreService.getCollection(_collectionPath).map((snapshot) {
-      return snapshot.docs.map((doc) => Banner.fromFirestore(doc)).toList();
-    });
-  }
-
-  // Add a new banner
-  Future<DocumentReference> addBanner(Banner banner) async {
-    return await _firestoreService.addDocument(
-        _collectionPath, banner.toFirestore());
-  }
-
-  // Update an existing banner
-  Future<void> updateBanner(Banner banner) async {
-    return await _firestoreService.updateDocument(
-        '$_collectionPath/${banner.id}', banner.toFirestore());
-  }
-
-  // Delete a banner by ID
-  Future<void> deleteBanner(String id) async {
-    return await _firestoreService.deleteDocument('$_collectionPath/$id');
-  }
-}
+      import 'package:cloud_firestore/cloud_firestore.dart';
+      import 'package:myapp/models/app_banner.dart'; // Renamed import
+      
+      class BannerService {
+        final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+      
+        Stream<List<AppBanner>> getBanners() { // Refactored to AppBanner
+          return _firestore.collection('banners').snapshots().map((snapshot) {
+            return snapshot.docs.map((doc) => AppBanner.fromFirestore(doc)).toList(); // Refactored to AppBanner
+          });
+        }
+      
+        Future<void> addBanner(AppBanner banner) async { // Refactored to AppBanner
+          try {
+             await _firestore.collection('banners').add(banner.toMap());
+          } catch (e) {
+            print('Error adding banner: $e');
+            rethrow;
+          }
+        }
+      
+        Future<void> updateBanner(AppBanner banner) async { // Refactored to AppBanner
+          try {
+             await _firestore.collection('banners').doc(banner.id).update(banner.toMap());
+          } catch (e) {
+            print('Error updating banner: $e');
+            rethrow;
+          }
+        }
+      
+        Future<void> deleteBanner(String id) async {
+          try {
+            await _firestore.collection('banners').doc(id).delete();
+          } catch (e) {
+            print('Error deleting banner: $e');
+            rethrow;
+          }
+        }
+      }

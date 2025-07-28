@@ -26,12 +26,12 @@ class _EditProductScreenState extends State<EditProductScreen> {
   late TextEditingController _ageGroupController;
   late TextEditingController _genderController;
   String? _selectedCategory;
-  String? _selectedSubCategory; // You might need a separate list for subcategories
-  List<File> _newImages = [];
+  String? _selectedSubCategory;
+  final List<File> _newImages = [];
   List<String> _existingImageUrls = [];
-  List<String> _imagesToDelete = []; // Track images to delete
-  List<String> _subcategories = []; // List to hold subcategories for the selected category
-
+  final List<String> _imagesToDelete = [];
+  List<String> _subcategories = [];
+  bool _isSaving = false;
 
   @override
   void initState() {
@@ -42,12 +42,11 @@ class _EditProductScreenState extends State<EditProductScreen> {
     _stockController = TextEditingController(text: widget.product?.stock.toString() ?? '');
     _ageGroupController = TextEditingController(text: widget.product?.ageGroup ?? '');
     _genderController = TextEditingController(text: widget.product?.gender ?? '');
-    _existingImageUrls = widget.product?.images ?? [];
+    _existingImageUrls = widget.product?.imageUrls ?? []; // Use imageUrls
     _selectedCategory = widget.product?.category;
-    _selectedSubCategory = widget.product?.subCategory; // Initialize subcategory
+    _selectedSubCategory = widget.product?.subcategory; // Use subcategory
 
-     // Fetch subcategories if editing and category is already selected
-    if (_selectedCategory != null && widget.product != null) {
+     if (_selectedCategory != null) {
       _fetchSubcategories(_selectedCategory!);
     }
   }
@@ -83,75 +82,100 @@ class _EditProductScreenState extends State<EditProductScreen> {
   void _removeExistingImage(String imageUrl) {
      setState(() {
       _existingImageUrls.remove(imageUrl);
-      _imagesToDelete.add(imageUrl); // Add image URL to the list of images to delete
+      _imagesToDelete.add(imageUrl);
      });
   }
 
   Future<void> _saveProduct() async {
-    if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+    _formKey.currentState!.save();
 
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
       final productService = Provider.of<ProductService>(context, listen: false);
       final Timestamp now = Timestamp.now();
 
       if (widget.product == null) {
         // Add new product
         final newProduct = Product(
-          id: '', // Firestore will generate the ID
-          name: _nameController.text,
-          description: _descriptionController.text,
-          price: double.parse(_priceController.text),
+          id: '',
+          name: _nameController.text.trim(),
+          description: _descriptionController.text.trim(),
+          price: double.parse(_priceController.text.trim()),
           category: _selectedCategory ?? '',
-          subCategory: _selectedSubCategory ?? '',
-          images: [], // Images will be added after upload
-          stock: int.parse(_stockController.text),
-          ageGroup: _ageGroupController.text,
-          gender: _genderController.text,
+          subcategory: _selectedSubCategory ?? '',
+          imageUrls: [], // Will be populated after upload
+          stock: int.parse(_stockController.text.trim()),
+          ageGroup: _ageGroupController.text.trim().isEmpty ? null : _ageGroupController.text.trim(),
+          gender: _genderController.text.trim().isEmpty ? null : _genderController.text.trim(),
           createdAt: now,
           updatedAt: now,
         );
-        await productService.addProduct(newProduct, _newImages.map((file) => file.path).toList());
+        await productService.addProduct(newProduct, _newImages);
       } else {
         // Update existing product
          final updatedProduct = Product(
           id: widget.product!.id,
-          name: _nameController.text,
-          description: _descriptionController.text,
-          price: double.parse(_priceController.text),
+          name: _nameController.text.trim(),
+          description: _descriptionController.text.trim(),
+          price: double.parse(_priceController.text.trim()),
           category: _selectedCategory ?? '',
-          subCategory: _selectedSubCategory ?? '',
-          images: _existingImageUrls, // Start with existing images
-          stock: int.parse(_stockController.text),
-          ageGroup: _ageGroupController.text,
-          gender: _genderController.text,
-          createdAt: widget.product!.createdAt, // Keep original createdAt
+          subcategory: _selectedSubCategory ?? '',
+          imageUrls: _existingImageUrls, // Pass the potentially modified list
+          stock: int.parse(_stockController.text.trim()),
+          ageGroup: _ageGroupController.text.trim().isEmpty ? null : _ageGroupController.text.trim(),
+          gender: _genderController.text.trim().isEmpty ? null : _genderController.text.trim(),
+          createdAt: widget.product!.createdAt,
           updatedAt: now,
         );
          await productService.updateProduct(
           updatedProduct,
-          newImagePaths: _newImages.map((file) => file.path).toList(),
-          imagesToDelete: _imagesToDelete, // Pass the list of images to delete
+          newImages: _newImages,
+          imagesToDelete: _imagesToDelete,
         );
       }
 
       Navigator.pop(context); // Go back after saving
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to save product: $e'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
     }
+
+    setState(() {
+      _isSaving = false;
+    });
   }
 
   Future<void> _fetchSubcategories(String categoryName) async {
-     final categoryService = Provider.of<CategoryService>(context, listen: false); // Access CategoryService
-     List<String> subcategories = await categoryService.getSubcategoriesForCategory(categoryName);
-     setState(() {
-       _subcategories = subcategories;
-       // If the current product has a subcategory, make sure it's still in the list
-       if(widget.product != null && widget.product!.category == categoryName && _subcategories.contains(widget.product!.subCategory)){
-          _selectedSubCategory = widget.product!.subCategory; // Keep the existing subcategory if it exists in the new list
-       } else {
-         _selectedSubCategory = null; // Reset subcategory if category changes or existing subcategory is not in the new list
-       }
-     });
+     final categoryService = Provider.of<CategoryService>(context, listen: false);
+     try {
+       List<String> subcategories = await categoryService.getSubcategoriesForCategory(categoryName);
+        setState(() {
+         _subcategories = subcategories;
+         // If the current product has a subcategory in the selected category, keep it
+         if(widget.product != null && widget.product!.category == categoryName && subcategories.contains(widget.product!.subcategory)){
+            _selectedSubCategory = widget.product!.subcategory; 
+         } else {
+           _selectedSubCategory = null;
+         }
+       });
+     } catch (e) {
+       print('Error fetching subcategories: $e');
+        setState(() {
+         _subcategories = [];
+         _selectedSubCategory = null;
+       });
+     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -183,23 +207,37 @@ class _EditProductScreenState extends State<EditProductScreen> {
                 controller: _priceController,
                 decoration: const InputDecoration(labelText: 'Price'),
                 keyboardType: TextInputType.number,
-                validator: (val) =>
-                    val!.isEmpty ? 'Please enter a price' : null,
+                validator: (val) {
+                   if (val == null || val.isEmpty) {
+                     return 'Please enter a price';
+                   }
+                   if (double.tryParse(val) == null) {
+                     return 'Please enter a valid number';
+                   }
+                   return null;
+                },
               ),
               TextFormField(
                 controller: _stockController,
                 decoration: const InputDecoration(labelText: 'Stock'),
                 keyboardType: TextInputType.number,
-                validator: (val) =>
-                    val!.isEmpty ? 'Please enter stock quantity' : null,
+                validator: (val) {
+                  if (val == null || val.isEmpty) {
+                    return 'Please enter stock quantity';
+                  }
+                  if (int.tryParse(val) == null) {
+                     return 'Please enter a valid integer';
+                   }
+                  return null;
+                },
               ),
               TextFormField(
                 controller: _ageGroupController,
-                decoration: const InputDecoration(labelText: 'Age Group'),
+                decoration: const InputDecoration(labelText: 'Age Group (Optional)'),
               ),
               TextFormField(
                 controller: _genderController,
-                decoration: const InputDecoration(labelText: 'Gender'),
+                decoration: const InputDecoration(labelText: 'Gender (Optional)'),
               ),
               const SizedBox(height: 20),
               // Category Dropdown
@@ -225,11 +263,11 @@ class _EditProductScreenState extends State<EditProductScreen> {
                     onChanged: (value) {
                       setState(() {
                         _selectedCategory = value;
-                        _selectedSubCategory = null; // Reset subcategory when category changes
+                        _selectedSubCategory = null;
                         if (value != null) {
-                           _fetchSubcategories(value); // Fetch subcategories for the new category
+                           _fetchSubcategories(value);
                         } else {
-                           _subcategories = []; // Clear subcategories if no category is selected
+                           _subcategories = [];
                         }
                       });
                     },
@@ -242,7 +280,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
               // Subcategory Dropdown
                DropdownButtonFormField<String>(
                 value: _selectedSubCategory,
-                decoration: const InputDecoration(labelText: 'Subcategory'),
+                decoration: const InputDecoration(labelText: 'Subcategory (Optional)'),
                  items: _subcategories.map((subCategory) {
                     return DropdownMenuItem(
                       value: subCategory,
@@ -254,7 +292,6 @@ class _EditProductScreenState extends State<EditProductScreen> {
                     _selectedSubCategory = value;
                   });
                 },
-                // Validator is optional for subcategory, depending on your requirements
                ),
                const SizedBox(height: 20),
               // Image Upload Section
@@ -299,10 +336,13 @@ class _EditProductScreenState extends State<EditProductScreen> {
               ),
 
               const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _saveProduct,
-                child: Text(widget.product == null ? 'Add Product' : 'Save Changes'),
-              ),
+              if (_isSaving)
+                const Center(child: CircularProgressIndicator())
+              else
+                ElevatedButton(
+                  onPressed: _saveProduct,
+                  child: Text(widget.product == null ? 'Add Product' : 'Save Changes'),
+                ),
             ],
           ),
         ),
